@@ -4,63 +4,20 @@
 
 <h3>WhatsApp Sender</h3>
 
-<!-- PHONE -->
 <input id="phone" placeholder="Enter phone (+91...)" /><br><br>
-<button onclick="start()">Continue</button>
+<input id="message" placeholder="Enter message" /><br><br>
 
-<!-- JOIN STEP -->
-<div id="joinStep" style="display:none;">
-  <p>Join WhatsApp first:</p>
-  <a id="joinLink" target="_blank">Click to Join</a><br><br>
-  <button onclick="verify()">I have sent the message</button>
-</div>
-
-<!-- MESSAGE STEP -->
-<div id="messageStep" style="display:none;">
-  <input id="message" placeholder="Enter message" /><br><br>
-  <button onclick="sendMessage()">Send</button>
-</div>
+<button onclick="sendMessage()">Send</button>
 
 <p id="status"></p>
 
 <script>
-let userPhone = "";
-let joined = false;
-
-// STEP 1: Start
-function start() {
-  userPhone = document.getElementById("phone").value;
-
-  if (!userPhone.startsWith("+")) {
-    document.getElementById("status").innerText = "Enter valid number";
-    return;
-  }
-
-  // Twilio sandbox join link
-  const link = "https://wa.me/14155238886?text=join%20rate-topic";
-
-  document.getElementById("joinLink").href = link;
-  document.getElementById("joinStep").style.display = "block";
-}
-
-// STEP 2: Verify (manual)
-function verify() {
-  joined = true;
-  document.getElementById("status").innerText = "Verified. Now send message.";
-  document.getElementById("messageStep").style.display = "block";
-}
-
-// STEP 3: Send message
 function sendMessage() {
-  if (!joined) {
-    document.getElementById("status").innerText = "Join WhatsApp first";
-    return;
-  }
-
+  const phone = document.getElementById("phone").value;
   const message = document.getElementById("message").value;
 
-  if (!message) {
-    document.getElementById("status").innerText = "Enter message";
+  if (!phone || !message) {
+    document.getElementById("status").innerText = "Enter all fields";
     return;
   }
 
@@ -70,24 +27,30 @@ function sendMessage() {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      user_phone: userPhone,
+      user_phone: phone,
       event_name: message
     })
   })
   .then(res => res.json())
   .then(res => {
+    console.log("Response:", res);
+
     if (res.status === "success") {
-      document.getElementById("status").innerText = "Message sent";
-    } else {
+      document.getElementById("status").innerText = "Message sent ✅";
+    } 
+    else if (res.status === "error") {
       document.getElementById("status").innerText = res.message;
 
-      // 🔥 REDIRECT TO JOIN AGAIN IF ERROR
+      // redirect ONLY on error
       const link = "https://wa.me/14155238886?text=join%20rate-topic";
       window.open(link, "_blank");
+    } 
+    else {
+      document.getElementById("status").innerText = "Unexpected response";
     }
   })
   .catch(() => {
-    document.getElementById("status").innerText = "Error occurred";
+    document.getElementById("status").innerText = "Error sending message";
   });
 }
 </script>
