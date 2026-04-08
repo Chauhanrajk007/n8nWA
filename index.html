@@ -1,129 +1,93 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>WhatsApp Instant Reminder</title>
-  <style>
-    body {
-      font-family: Arial;
-      text-align: center;
-      margin-top: 50px;
-      background: #f4f4f4;
-    }
-    .card {
-      background: white;
-      padding: 20px;
-      width: 320px;
-      margin: auto;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #ccc;
-    }
-    input, button {
-      padding: 10px;
-      margin-top: 10px;
-      width: 90%;
-    }
-    button {
-      background: #25D366;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #1ebe5d;
-    }
-    #status {
-      margin-top: 15px;
-      font-weight: bold;
-    }
-  </style>
-</head>
 <body>
 
-<div class="card">
+<h3>WhatsApp Sender</h3>
 
-<h2>WhatsApp Sender</h2>
+<!-- PHONE -->
+<input id="phone" placeholder="Enter phone (+91...)" /><br><br>
+<button onclick="start()">Continue</button>
 
-<!-- STEP 1: PHONE -->
-<input type="text" id="phone" placeholder="Enter phone (+91...)" />
-<button onclick="generateLink()">Continue</button>
-
-<!-- STEP 2: JOIN -->
-<div id="step2" style="display:none;">
-  <p>👉 Join WhatsApp first:</p>
-  <a id="joinLink" target="_blank">Click to Join</a>
-  <button onclick="verifyJoin()">I have sent the message</button>
+<!-- JOIN STEP -->
+<div id="joinStep" style="display:none;">
+  <p>Join WhatsApp first:</p>
+  <a id="joinLink" target="_blank">Click to Join</a><br><br>
+  <button onclick="verify()">I have sent the message</button>
 </div>
 
-<!-- STEP 3: TASK -->
-<div id="step3" style="display:none;">
-  <input type="text" id="task" placeholder="Enter message/task" />
-  <button onclick="sendMessage()">Send Message</button>
+<!-- MESSAGE STEP -->
+<div id="messageStep" style="display:none;">
+  <input id="message" placeholder="Enter message" /><br><br>
+  <button onclick="sendMessage()">Send</button>
 </div>
 
 <p id="status"></p>
-
-</div>
 
 <script>
 let userPhone = "";
 let joined = false;
 
-// STEP 1: Generate join link
-function generateLink() {
+// STEP 1: Start
+function start() {
   userPhone = document.getElementById("phone").value;
 
   if (!userPhone.startsWith("+")) {
-    alert("Enter valid number (+91...)");
+    document.getElementById("status").innerText = "Enter valid number";
     return;
   }
 
+  // Twilio sandbox join link
   const link = "https://wa.me/14155238886?text=join%20rate-topic";
-  document.getElementById("joinLink").href = link;
 
-  document.getElementById("step2").style.display = "block";
+  document.getElementById("joinLink").href = link;
+  document.getElementById("joinStep").style.display = "block";
 }
 
 // STEP 2: Verify (manual)
-function verifyJoin() {
+function verify() {
   joined = true;
-  document.getElementById("status").innerText = "✅ Verified!";
-  document.getElementById("step3").style.display = "block";
+  document.getElementById("status").innerText = "Verified. Now send message.";
+  document.getElementById("messageStep").style.display = "block";
 }
 
-// STEP 3: Send instantly
+// STEP 3: Send message
 function sendMessage() {
   if (!joined) {
-    document.getElementById("status").innerText =
-      "❌ Please join WhatsApp first.";
+    document.getElementById("status").innerText = "Join WhatsApp first";
     return;
   }
 
-  const task = document.getElementById("task").value;
+  const message = document.getElementById("message").value;
 
-  if (!task) {
-    alert("Enter a message");
+  if (!message) {
+    document.getElementById("status").innerText = "Enter message";
     return;
   }
-
-  const data = {
-    user_phone: userPhone,
-    event_name: task
-  };
 
   fetch("https://chauhanrajk.app.n8n.cloud/webhook/reminder", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(data)
+    body: JSON.stringify({
+      user_phone: userPhone,
+      event_name: message
+    })
   })
-  .then(() => {
-    document.getElementById("status").innerText =
-      "🔥 Message sent successfully!";
+  .then(res => res.json())
+  .then(res => {
+    if (res.status === "success") {
+      document.getElementById("status").innerText = "Message sent";
+    } else {
+      document.getElementById("status").innerText = res.message;
+
+      // 🔥 REDIRECT TO JOIN AGAIN IF ERROR
+      const link = "https://wa.me/14155238886?text=join%20rate-topic";
+      window.open(link, "_blank");
+    }
   })
   .catch(() => {
-    document.getElementById("status").innerText =
-      "❌ Error. Make sure you joined WhatsApp.";
+    document.getElementById("status").innerText = "Error occurred";
   });
 }
 </script>
