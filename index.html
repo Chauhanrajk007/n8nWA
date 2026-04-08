@@ -3,10 +3,12 @@
 <head>
   <title>WhatsApp Reminder</title>
   <style>
-    body { font-family: Arial; text-align: center; margin-top: 50px; }
-    .card { background: white; padding: 20px; width: 320px; margin: auto; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
-    input, button { padding: 10px; margin-top: 10px; width: 90%; }
-    button { background: green; color: white; border: none; }
+    body { font-family: Arial; text-align: center; margin-top: 50px; background:#f4f4f4;}
+    .card { background:white; padding:20px; width:320px; margin:auto; border-radius:10px; box-shadow:0 0 10px #ccc;}
+    input, button { padding:10px; margin-top:10px; width:90%;}
+    button { background:#25D366; color:white; border:none; cursor:pointer;}
+    button:hover { background:#1ebe5d;}
+    #status { margin-top:15px; font-weight:bold;}
   </style>
 </head>
 <body>
@@ -21,14 +23,14 @@
 
 <!-- JOIN -->
 <div id="step2" style="display:none;">
-  <p>Join WhatsApp:</p>
+  <p>👉 Join WhatsApp first:</p>
   <a id="joinLink" target="_blank">Click to Join</a>
-  <button onclick="verifyJoin()">I Joined</button>
+  <button onclick="verifyJoin()">I have sent the message</button>
 </div>
 
-<!-- TASK INPUT -->
+<!-- TASK -->
 <div id="step3" style="display:none;">
-  <input type="text" id="task" placeholder="Enter task name" />
+  <input type="text" id="task" placeholder="Enter task" />
   <input type="datetime-local" id="time" />
   <button onclick="setReminder()">Set Reminder</button>
 </div>
@@ -45,6 +47,11 @@ let joined = false;
 function generateLink() {
   userPhone = document.getElementById("phone").value;
 
+  if (!userPhone.startsWith("+")) {
+    alert("Enter valid number (+91...)");
+    return;
+  }
+
   const link = "https://wa.me/14155238886?text=join%20rate-topic";
   document.getElementById("joinLink").href = link;
 
@@ -58,10 +65,11 @@ function verifyJoin() {
   document.getElementById("step3").style.display = "block";
 }
 
-// STEP 3 (IMPORTANT)
+// STEP 3
 function setReminder() {
   if (!joined) {
-    document.getElementById("status").innerText = "❌ Join first!";
+    document.getElementById("status").innerText =
+      "❌ Please join WhatsApp first.";
     return;
   }
 
@@ -86,13 +94,19 @@ function setReminder() {
     },
     body: JSON.stringify(data)
   })
-  .then(() => {
-    document.getElementById("status").innerText =
-      "🔥 Reminder set!";
+  .then(res => res.json())
+  .then(res => {
+    if (res.status === "success") {
+      document.getElementById("status").innerText =
+        "🔥 Reminder set successfully!";
+    } else {
+      document.getElementById("status").innerText =
+        "❌ " + res.message;
+    }
   })
   .catch(() => {
     document.getElementById("status").innerText =
-      "❌ Error sending reminder";
+      "❌ Error. Please join again.";
   });
 }
 </script>
