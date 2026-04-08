@@ -1,38 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>WhatsApp Reminder</title>
+  <title>WhatsApp Instant Reminder</title>
   <style>
-    body { font-family: Arial; text-align: center; margin-top: 50px; background:#f4f4f4;}
-    .card { background:white; padding:20px; width:320px; margin:auto; border-radius:10px; box-shadow:0 0 10px #ccc;}
-    input, button { padding:10px; margin-top:10px; width:90%;}
-    button { background:#25D366; color:white; border:none; cursor:pointer;}
-    button:hover { background:#1ebe5d;}
-    #status { margin-top:15px; font-weight:bold;}
+    body {
+      font-family: Arial;
+      text-align: center;
+      margin-top: 50px;
+      background: #f4f4f4;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      width: 320px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    input, button {
+      padding: 10px;
+      margin-top: 10px;
+      width: 90%;
+    }
+    button {
+      background: #25D366;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1ebe5d;
+    }
+    #status {
+      margin-top: 15px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
 <div class="card">
 
-<h2>WhatsApp Reminder</h2>
+<h2>WhatsApp Sender</h2>
 
-<!-- PHONE -->
+<!-- STEP 1: PHONE -->
 <input type="text" id="phone" placeholder="Enter phone (+91...)" />
 <button onclick="generateLink()">Continue</button>
 
-<!-- JOIN -->
+<!-- STEP 2: JOIN -->
 <div id="step2" style="display:none;">
   <p>👉 Join WhatsApp first:</p>
   <a id="joinLink" target="_blank">Click to Join</a>
   <button onclick="verifyJoin()">I have sent the message</button>
 </div>
 
-<!-- TASK -->
+<!-- STEP 3: TASK -->
 <div id="step3" style="display:none;">
-  <input type="text" id="task" placeholder="Enter task" />
-  <input type="datetime-local" id="time" />
-  <button onclick="setReminder()">Set Reminder</button>
+  <input type="text" id="task" placeholder="Enter message/task" />
+  <button onclick="sendMessage()">Send Message</button>
 </div>
 
 <p id="status"></p>
@@ -43,7 +68,7 @@
 let userPhone = "";
 let joined = false;
 
-// STEP 1
+// STEP 1: Generate join link
 function generateLink() {
   userPhone = document.getElementById("phone").value;
 
@@ -58,15 +83,15 @@ function generateLink() {
   document.getElementById("step2").style.display = "block";
 }
 
-// STEP 2
+// STEP 2: Verify (manual)
 function verifyJoin() {
   joined = true;
   document.getElementById("status").innerText = "✅ Verified!";
   document.getElementById("step3").style.display = "block";
 }
 
-// STEP 3
-function setReminder() {
+// STEP 3: Send instantly
+function sendMessage() {
   if (!joined) {
     document.getElementById("status").innerText =
       "❌ Please join WhatsApp first.";
@@ -74,17 +99,15 @@ function setReminder() {
   }
 
   const task = document.getElementById("task").value;
-  const time = document.getElementById("time").value;
 
-  if (!task || !time) {
-    alert("Enter task and time");
+  if (!task) {
+    alert("Enter a message");
     return;
   }
 
   const data = {
     user_phone: userPhone,
-    event_name: task,
-    event_time: new Date(time).toISOString()
+    event_name: task
   };
 
   fetch("https://chauhanrajk.app.n8n.cloud/webhook/reminder", {
@@ -94,19 +117,13 @@ function setReminder() {
     },
     body: JSON.stringify(data)
   })
-  .then(res => res.json())
-  .then(res => {
-    if (res.status === "success") {
-      document.getElementById("status").innerText =
-        "🔥 Reminder set successfully!";
-    } else {
-      document.getElementById("status").innerText =
-        "❌ " + res.message;
-    }
+  .then(() => {
+    document.getElementById("status").innerText =
+      "🔥 Message sent successfully!";
   })
   .catch(() => {
     document.getElementById("status").innerText =
-      "❌ Error. Please join again.";
+      "❌ Error. Make sure you joined WhatsApp.";
   });
 }
 </script>
